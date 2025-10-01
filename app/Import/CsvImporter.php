@@ -5,15 +5,27 @@ namespace App\Import;
 use App\Models\Transaction;
 use App\Exceptions\InvalidCsvRowException;
 use App\Exceptions\InvalidAmountException;
+use App\Repositories\TransactionRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
-class CsvImporter
+class CsvImporter implements CsvImporterInterface
 {
-    protected string $path;
+    private string $path;
+    private CsvRowValidator $validator;
+    private TransactionRepositoryInterface $repository;
 
-    public function __construct(string $path)
+
+    public function __construct(string $path, CsvRowValidator $validator,TransactionRepositoryInterface $repository)
     {
         $this->path = $path;
+        $this->validator = $validator;
+        $this->repository = $repository;
+    }
+
+    public function setPath(string $path): self
+    {
+        $this->path = $path;
+        return $this;
     }
 
     public function import(): array
@@ -27,7 +39,8 @@ class CsvImporter
             throw new \RuntimeException("Cannot open file: {$this->path}");
         }
 
-        $header = null;
+        $header = ["date", "user_id", "user_type", "operation_type", "amount", "currency"];
+
         $lineNo = 0;
         $imported = [];
 
@@ -37,78 +50,36 @@ class CsvImporter
                 continue;
             }
 
-            if ($header === null) {
-                $header = array_map('trim', $row);
-                continue;
-            }
-            $header = [
-                "date",
-                "user_id",
-                "user_type",
-                "operation_type",
-                "amount",
-                "currency"
-            ];
-
+            // if csv file has header titles
+            // if ($header === null) {
+            //     $header = array_map('trim', $row);
+            //     continue;
+            // }
 
             if (count($row) !== count($header)) {
                 throw new InvalidCsvRowException("Malformed CSV header/row at line {$lineNo}");
             }
-
             $data = array_combine($header, $row);
 
-
             try {
-                $this->validateRow($data, $lineNo);
+                $data = $this->validator->validate($data, $lineNo);
             } catch (\Exception $e) {
                 throw new InvalidCsvRowException("Line {$lineNo}: " . $e->getMessage());
             }
-            $opMap = [
-                'deposit' => 'cash_in',
-                'withdraw' => 'cash_out',
-            ];
+            $opMap = ['deposit' => 'cash_in', 'withdraw' => 'cash_out'];
             $operationType = $opMap[$data['operation_type']] ?? $data['operation_type'];
-
-            $transaction = Transaction::create([
+            $transaction = $this->repository->create([
                 'date' => $data['date'],
                 'user_type' => $data['user_type'],
                 'operation_type' => $operationType,
                 'amount' => (float) $data['amount'],
                 'currency' => $data['currency'] ?? 'EUR',
             ]);
-
             $imported[] = $transaction;
         }
 
         fclose($handle);
 
         return $imported;
-    }
-
-    protected function validateRow(array $row, int $lineNo)
-    {
-        // date
-        if (!isset($row['date']) || !strtotime($row['date'])) {
-            throw new \InvalidArgumentException("Invalid date at line {$lineNo}");
-        }
-        // user_type
-        if (!in_array($row['user_type'], ['private', 'business'])) {
-            throw new \InvalidArgumentException("Invalid user_type at line {$lineNo}");
-        }
-        // operation_type
-        if (!in_array($row['operation_type'], ['cash_in', 'cash_out', 'loan_repayment', 'deposit', 'withdraw'])) {
-            throw new \InvalidArgumentException("Invalid operation_type at line {$lineNo}");
-        }
-        // amount
-        if (!isset($row['amount']) || !is_numeric($row['amount'])) {
-            throw new InvalidAmountException("Invalid amount at line {$lineNo}");
-        }
-        if ((float) $row['amount'] < 0) {
-            throw new InvalidAmountException("Amount cannot be negative at line {$lineNo}");
-        }
-        // currency basic
-        if (!isset($row['currency']) || strlen($row['currency']) !== 3) {
-            $row['currency'] = 'EUR';
-        }
     }
 }

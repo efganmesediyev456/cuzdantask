@@ -2,54 +2,38 @@
 
 namespace App\Services;
 
+use App\Factories\CommissionFactoryInterface;
 use App\Models\Transaction;
 use App\Models\ValueObjects\Amount;
-use App\Commission\CommissionFactory;
-use Illuminate\Support\Collection;
 
 class CommissionService
 {
-    /**
-     * @param Transaction[]|Collection $transactions
-     * @return array  keyed by transaction id => ['fee' => Amount, 'transaction' => Transaction]
-     */
+
+    private CommissionFactoryInterface $factory;
+
+    public function __construct(CommissionFactoryInterface $factory)
+    {
+        $this->factory = $factory;
+    }
+
     public function calculateForAll($transactions): array
     {
         $results = [];
         $transactions = collect($transactions);
-
         foreach ($transactions as $tx) {
-            $amountVo = new Amount((float)$tx->amount, $tx->currency);
-            $commissionType = CommissionFactory::make($tx);
-            $fee = $commissionType->calculate($amountVo, $tx);
-            $results[$tx->id] = [
-                'fee' => $fee,
-                'transaction' => $tx,
-            ];
+            try {
+                $amountVo = new Amount((float) $tx->amount, $tx->currency);
+                $commissionType = $this->factory->make($tx);
+                $fee = $commissionType->calculate($amountVo, $tx);
+                $results[$tx->id] = [
+                    'fee' => $fee,
+                    'transaction' => $tx,
+                ];
+            } catch (\Exception $e) {
+                \Log::error("Commission calculation failed for TX ID {$tx->id}: " . $e->getMessage());
+                continue;
+            }
         }
-
         return $results;
-    }
-
-    /**
-     * Simple filtering helper
-     */
-    public function filter(array $criteria = [])
-    {
-        $query = Transaction::query();
-
-        if (!empty($criteria['date_from'])) {
-            $query->where('date', '>=', $criteria['date_from']);
-        }
-        if (!empty($criteria['date_to'])) {
-            $query->where('date', '<=', $criteria['date_to']);
-        }
-        if (!empty($criteria['user_type'])) {
-            $query->where('user_type', $criteria['user_type']);
-        }
-        if (!empty($criteria['operation_type'])) {
-            $query->where('operation_type', $criteria['operation_type']);
-        }
-        return $query->get();
     }
 }
