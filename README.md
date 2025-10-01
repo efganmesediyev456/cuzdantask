@@ -92,27 +92,3 @@ composer test
 ```bash
 vendor/bin/phpunit
 ```
-
-Testlər:
-
-Komissiya qaydalarının doğruluğu (max/min limitlər)
-
-CSV parser valid/invalid halları
-
-Filtrləmə logic doğruluğu
-
-Extensibility
-
-Yeni komissiya növləri əlavə etmək çox asandır:
-
-app/Commission/ qovluğunda yeni CommissionTypeInterface implementasiyası yaradın.
-
-CommissionFactory-ə yeni qaydanı əlavə edin.
-
-Notes
-
-Valyuta çevirməsi üçün ayrıca CurrencyConverter servisi əlavə etmək mümkündür.
-
-Maliyyə dəqiqliyi üçün decimal istifadə olunur.
-
-CommissionService bütün əməliyyatları qəbul edir, həm filtrləmə, həm də komissiya hesablamasını idarə edir.
