@@ -38,11 +38,11 @@ class CsvImporter implements CsvImporterInterface
         if ($handle === false) {
             throw new \RuntimeException("Cannot open file: {$this->path}");
         }
-
+        
         $header = ["date", "user_id", "user_type", "operation_type", "amount", "currency"];
-
         $lineNo = 0;
         $imported = [];
+        $opMap = ['deposit' => 'cash_in', 'withdraw' => 'cash_out'];
 
         while (($row = fgetcsv($handle)) !== false) {
             $lineNo++;
@@ -50,7 +50,7 @@ class CsvImporter implements CsvImporterInterface
                 continue;
             }
 
-            // if csv file has header titles
+            // if csv filein basliqlari olsa
             // if ($header === null) {
             //     $header = array_map('trim', $row);
             //     continue;
@@ -66,7 +66,7 @@ class CsvImporter implements CsvImporterInterface
             } catch (\Exception $e) {
                 throw new InvalidCsvRowException("Line {$lineNo}: " . $e->getMessage());
             }
-            $opMap = ['deposit' => 'cash_in', 'withdraw' => 'cash_out'];
+            
             $operationType = $opMap[$data['operation_type']] ?? $data['operation_type'];
             $transaction = $this->repository->create([
                 'date' => $data['date'],

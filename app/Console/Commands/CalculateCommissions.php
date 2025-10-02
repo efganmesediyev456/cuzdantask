@@ -25,7 +25,7 @@ class CalculateCommissions extends Command
         foreach ($results as $txId => $info) {
             $tx = $info['transaction'];
             $fee = $info['fee'];
-            $this->line("Tx {$tx->id} | {$tx->date->toDateString()} | {$tx->operation_type} | amount={$tx->amount} {$tx->currency} => fee={$fee->value} {$fee->currency}");
+            $this->line("{$tx->id}. | {$tx->date->toDateString()} | {$tx->operation_type} | amount={$tx->amount} {$tx->currency} => fee={$fee->value} {$fee->currency}");
         }
         $sum = array_reduce($results, fn($carry, $it) => $carry + $it['fee']->value, 0);
         $this->info("Total fees: " . number_format($sum, 2));
