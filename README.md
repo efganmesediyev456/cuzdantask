@@ -67,20 +67,6 @@ Output nümunəsi:
 13. | 2016-02-19 |  cash_out | private |  amount=3000000.0000 JPY => fee=9000 JPY
 Total fees: 9,100.90
 ```
-Commission Rules
-Operation Type	User Type	Fee Calculation	Min/Max
-cash_in	all	0.03% of amount	max 5
-cash_out	private	0.3% of amount	min 0.5
-cash_out	business	0.5% of amount	-
-loan_repayment	all	2% + 1 unit	-
-Filtering
-
-date_from / date_to
-
-user_type → private / business
-
-operation_type → cash_in / cash_out / loan_repayment
-
 Testing
 
 Unit testlər üçün PHPUnit istifadə olunur.
