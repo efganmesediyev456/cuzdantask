@@ -56,15 +56,16 @@ php artisan commissions:calculate
 
 Filtrləmiş əməliyyatlar
 ```bash
-php artisan commissions:calculate --date_from=2025-09-01 --date_to=2025-09-30 --user_type=private --operation_type=cash_out
+php artisan commissions:calculate --date_from=2015-12-31 --user_type=private --operation_type=cash_out
 ```
 Output nümunəsi:
 ```bash
-Tx 1 | 2025-09-01 | cash_in | amount=2000 EUR => fee=0.60 EUR
-Tx 2 | 2025-09-02 | cash_out | amount=1000 EUR => fee=5.00 EUR
+3. | 2016-01-05 |  cash_out | private |  amount=1000.0000 EUR => fee=3 EUR
+6. | 2016-01-06 |  cash_out | private |  amount=30000.0000 JPY => fee=90 JPY
 ...
 
-Total fees: 16.10 EUR
+13. | 2016-02-19 |  cash_out | private |  amount=3000000.0000 JPY => fee=9000 JPY
+Total fees: 9,100.90
 ```
 Commission Rules
 Operation Type	User Type	Fee Calculation	Min/Max
